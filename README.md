@@ -40,8 +40,18 @@ dotnet run --project api/GopiCrackers.Api
 ## Passcode
 
 The admin is guarded by one shared passcode, read by the API from
-`Storefront:Admin:Passcode`. It ships empty, which refuses every request — set
-it before the admin will let you in:
+`Storefront:Admin:Passcode`. `appsettings.json` ships it **empty**, which
+answers 503 to every admin endpoint — a deployment that forgets to set one
+refuses everyone rather than admitting everyone.
+
+For a demo it is set in the storefront repo's
+`api/GopiCrackers.Api/appsettings.Development.json`:
+
+```
+gopi-demo-2026
+```
+
+Anywhere else, set your own:
 
 ```bash
 dotnet user-secrets set "Storefront:Admin:Passcode" "<passcode>" \
@@ -57,6 +67,17 @@ of it before this is exposed to the internet. The seam to replace is the API's
 The passcode you type lives in `sessionStorage` and dies with the tab. It is
 verified against the API on every load rather than trusted, so a stale one
 re-prompts instead of failing mid-screen.
+
+## Showing it to someone
+
+`demo/` seeds a running API with a fortnight of trade — a dozen orders across
+every status, bulk enquiries, contact messages and the browsing behind them —
+so the nine screens have something on them. See [demo/README.md](demo/README.md).
+
+```bash
+node demo/seed.mjs                                        # API running
+node demo/seed.mjs --backdate --data <storefront>/src/data  # API stopped
+```
 
 ## Screens
 
