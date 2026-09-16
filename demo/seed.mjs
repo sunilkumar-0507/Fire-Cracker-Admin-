@@ -403,7 +403,25 @@ async function seedLive() {
   }
   console.log('  22 visits that looked but did not buy');
 
-  /* ---- Bulk enquiries ---------------------------------------------------- */
+  await seedEnquiriesAndMessages(served);
+
+  console.log('\nSeeded.');
+  console.log(
+    '\nAnalytics are batched behind a 15-second timer, so stop the API with Ctrl+C\n' +
+      '— which flushes on the way out — rather than killing it. Then:\n' +
+      '  node demo/seed.mjs --backdate --data <storefront>/src/data',
+  );
+}
+
+/**
+ * Enquiries and contact messages, which the API keeps in memory and never
+ * journals — orders survive a restart, these do not. Run this on its own after
+ * restarting the API to put them back, without adding twelve more orders:
+ *
+ *   node demo/seed.mjs --enquiries
+ */
+async function seedEnquiriesAndMessages(districts) {
+  const served = districts ?? new Set(await get('/api/meta/districts'));
 
   for (const e of ENQUIRIES) {
     const created = await post('/api/bulk-enquiries', {
@@ -439,13 +457,6 @@ async function seedLive() {
     });
   }
   console.log(`  ${MESSAGES.length} contact messages`);
-
-  console.log('\nSeeded.');
-  console.log(
-    '\nAnalytics are batched behind a 15-second timer, so stop the API with Ctrl+C\n' +
-      '— which flushes on the way out — rather than killing it. Then:\n' +
-      '  node demo/seed.mjs --backdate --data <storefront>/src/data',
-  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -551,7 +562,9 @@ async function backdate() {
 /* -------------------------------------------------------------------------- */
 
 try {
-  await (has('backdate') ? backdate() : seedLive());
+  if (has('backdate')) await backdate();
+  else if (has('enquiries')) await seedEnquiriesAndMessages();
+  else await seedLive();
 } catch (error) {
   console.error(`\n${error.message}`);
   if (!has('backdate')) {

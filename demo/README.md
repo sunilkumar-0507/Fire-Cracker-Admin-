@@ -31,6 +31,74 @@ ADMIN_PASSCODE=something-else node demo/seed.mjs
 node demo/seed.mjs --passcode something-else
 ```
 
+## A demo with no API at all (Vercel, Netlify, any static host)
+
+This is the one to hand a client a link to. There is no API, no database and
+nothing to run — the admin answers its own requests in the browser.
+
+```bash
+npm run build:demo     # dist/, ready to upload anywhere
+npm run preview:demo   # build it and look at it on :4174
+```
+
+`vercel.json` already points Vercel at that build, so a deploy needs no
+settings changed. It also rewrites every path to `index.html`, which the router
+needs — without it, refreshing on `/orders` is a 404 from the host, not from
+the app.
+
+The passcode arrives **already filled in** and an amber bar across the top says
+the data is invented. One click on Unlock and the nine screens are populated.
+
+### How it works
+
+`VITE_DEMO_MODE=1` (set in `.env.demo`) swaps the transport underneath
+`lib/api.js`: every call is answered by `src/demo/demoApi.js` out of the
+fixtures in `src/demo/fixtures/`, which are **real responses captured from a
+seeded API** rather than hand-written JSON, so they cannot drift from the
+contract by being typed out wrong.
+
+Writes work — edit a product, take a stock count, advance an order — and the
+dashboard reflects them a click later, because the summary is recomputed from
+the same in-memory copy rather than served from the fixture. Nothing survives a
+refresh, and two people opening the link do not see each other's changes.
+
+The flag is checked, never the network. Falling back to demo data whenever the
+API happened to be unreachable would turn a real outage into a screen full of
+invented orders, which is a far worse failure than an error message.
+
+A normal `npm run build` contains none of this — no demo chunk, no fixtures, no
+passcode. Verified by grepping the output.
+
+### What is not real about it
+
+- **The passcode check is a prop.** There is no server, so it is compared in the
+  browser against a string inside the bundle. Anyone who opens the page can read
+  it. It gates invented data on a throwaway deployment and nothing else.
+- **The dates are a snapshot.** The fixtures were captured once, so the trade in
+  them stays on the fortnight it was seeded and ages as the months pass.
+  Regenerate them when that starts to show.
+
+### Regenerating the fixtures
+
+Seed a local API as below, then capture it:
+
+```bash
+H="X-Admin-Passcode: gopi-demo-2026"
+cd src/demo/fixtures
+curl -s http://localhost:5080/api/bootstrap -o bootstrap.json
+curl -s -H "$H" http://localhost:5080/api/admin/summary -o summary.json
+curl -s -H "$H" "http://localhost:5080/api/admin/orders?pageSize=100" -o orders.json
+curl -s -H "$H" "http://localhost:5080/api/admin/enquiries?pageSize=100" -o enquiries.json
+curl -s -H "$H" "http://localhost:5080/api/admin/messages?pageSize=100" -o messages.json
+for d in 7 30 90; do
+  curl -s -H "$H" "http://localhost:5080/api/admin/analytics?days=$d" -o "analytics-$d.json"
+done
+```
+
+Enquiries and messages are held in memory by the API and never journalled, so
+capture them in the same run that seeded them — a restart in between and they
+are gone. `node demo/seed.mjs --enquiries` puts them back on their own.
+
 ## Seeding
 
 `seed.mjs` fills a running API by talking to it — the same endpoints the
@@ -105,6 +173,7 @@ them every stage is the same number and the screen demonstrates nothing.
 | `--days <n>` | `14` | The window pass two spreads across |
 | `--backdate` | — | Run pass two instead of pass one |
 | `--data <path>` | — | Required by `--backdate`; the folder holding the two journals |
+| `--enquiries` | — | Only the enquiries and messages, for after an API restart |
 
 ## Re-seeding
 

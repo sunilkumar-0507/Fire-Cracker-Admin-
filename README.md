@@ -70,14 +70,30 @@ re-prompts instead of failing mid-screen.
 
 ## Showing it to someone
 
-`demo/` seeds a running API with a fortnight of trade — a dozen orders across
-every status, bulk enquiries, contact messages and the browsing behind them —
-so the nine screens have something on them. See [demo/README.md](demo/README.md).
+There are two ways, and the first needs no API at all.
+
+**A static demo build.** The admin answers its own requests in the browser from
+a snapshot of a real seeded API, so it can be deployed to Vercel or any static
+host with no backend behind it. The passcode arrives filled in and an amber bar
+says the data is invented.
 
 ```bash
-node demo/seed.mjs                                        # API running
+npm run build:demo     # dist/, deploy anywhere
+npm run preview:demo   # look at it first, on :4174
+```
+
+`vercel.json` already points Vercel at that build and adds the SPA rewrite the
+router needs. A normal `npm run build` contains none of the demo code.
+
+**A real API with seeded trade.** `demo/seed.mjs` fills a running API with a
+fortnight of orders, enquiries and the browsing behind them.
+
+```bash
+node demo/seed.mjs                                          # API running
 node demo/seed.mjs --backdate --data <storefront>/src/data  # API stopped
 ```
+
+Both are covered in [demo/README.md](demo/README.md).
 
 ## Screens
 

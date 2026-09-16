@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { adminApi, adminPasscode } from '@/lib/api';
+import { DEMO, DEMO_PASSCODE } from '@/demo/flags';
 import { Button, Field, Input } from '@/ui';
 import { Lock } from '@/components/icons';
 
@@ -14,10 +15,15 @@ import { Lock } from '@/components/icons';
  * This is a shared passcode, sent in plain text, with no accounts and no rate
  * limiting. It keeps the admin out of casual reach on a shop's own network. It
  * is not authentication, and the API says so too — see AdminOnlyAttribute.
+ *
+ * A demo build has no API to ask, so `demoApi` answers instead and the field
+ * arrives filled in — the point of that deployment is that whoever opens the
+ * link gets in, and a passcode they have to be told separately only gets lost
+ * in a chat thread.
  */
 export const AdminGate = ({ children }) => {
   const [status, setStatus] = useState('checking');
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(DEMO ? DEMO_PASSCODE : '');
   const [error, setError] = useState('');
 
   // A passcode already in sessionStorage is verified rather than trusted, so a
@@ -112,11 +118,19 @@ export const AdminGate = ({ children }) => {
           Unlock
         </Button>
 
-        <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
-          One shared passcode, sent in plain text, with no accounts or audit trail.
-          Fine on the shop’s own network — put real authentication in front of this
-          before exposing it to the internet.
-        </p>
+        {DEMO ? (
+          <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
+            Demo — the passcode is filled in, press Unlock. Everything past this
+            screen is invented data served from the browser, with no API behind
+            it and nothing saved.
+          </p>
+        ) : (
+          <p className="mt-4 text-[11px] leading-relaxed text-slate-500">
+            One shared passcode, sent in plain text, with no accounts or audit trail.
+            Fine on the shop’s own network — put real authentication in front of this
+            before exposing it to the internet.
+          </p>
+        )}
       </form>
     </div>
   );

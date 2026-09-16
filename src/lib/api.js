@@ -13,6 +13,8 @@
  * screens can render `err.message` straight into a toast.
  */
 
+import { DEMO } from '@/demo/flags';
+
 /** Vite inlines this at build time; the proxy in vite.config.js covers dev. */
 const BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
 
@@ -100,6 +102,27 @@ const request = async (path, { method = 'GET', body, anonymous = false, signal }
   // Every admin call is authenticated. The flag exists for `/api/bootstrap`,
   // which is the same public catalogue the shop reads.
   if (!anonymous) headers['X-Admin-Passcode'] = adminPasscode.get();
+
+  /* Tested against `import.meta.env` directly rather than the imported `DEMO`.
+     Vite replaces this with a literal, so a normal build reads `if (undefined)`,
+     drops the branch, and never emits the demo chunk at all — whereas a flag
+     imported from another module leaves Rollup emitting a quarter of a megabyte
+     of invented customers into a production deployment that never loads it. */
+  if (import.meta.env.VITE_DEMO_MODE) {
+    const { demoRequest } = await import('@/demo/demoApi');
+    const { status, payload } = await demoRequest(path, {
+      method,
+      body,
+      anonymous,
+      passcode: adminPasscode.get(),
+    });
+
+    if (status === 204) return null;
+    if (status >= 400) {
+      throw new ApiError(messageFrom(payload, status), { status, problem: payload });
+    }
+    return payload;
+  }
 
   let response;
   try {
@@ -206,5 +229,7 @@ export const adminApi = {
     list: (params = {}) => request(`/admin/messages${qs(params)}`),
   },
 };
+
+export { DEMO };
 
 export default adminApi;

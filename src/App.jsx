@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import router from '@/routes';
+import { DEMO } from '@/demo/flags';
 
 /**
  * Admin root.
@@ -10,9 +11,19 @@ import router from '@/routes';
  * screen in here exists to write something, so an API that is not answering
  * means nothing on screen can be saved — and that should be said plainly
  * rather than discovered one failed save at a time.
+ *
+ * A demo build says so instead. There is no API behind it and nothing on screen
+ * is real, which anybody looking at it should be told before they take a number
+ * off it seriously.
  */
 export const App = ({ offline = false, offlineReason }) => (
   <>
+    {DEMO ? (
+      <div className="bg-amber-500 px-4 py-2 text-center text-sm font-medium text-slate-950">
+        Demo — invented data, no API behind it. Changes last until you refresh.
+      </div>
+    ) : null}
+
     {offline ? (
       <div
         role="alert"
