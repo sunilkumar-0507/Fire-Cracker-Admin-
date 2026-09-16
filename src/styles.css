@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * The admin's entire stylesheet.
+ *
+ * Everything else is Tailwind utilities on the components themselves. What is
+ * here is the handful of things a utility cannot express: the page ground, and
+ * a scrollbar that does not look wrong on a dark sidebar.
+ */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+  }
+
+  /* Tables of numbers are read by comparing columns, so the digits have to
+     line up. Tabular figures cost nothing and make a stock take legible. */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* The storefront honours prefers-reduced-motion globally; so does this. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
