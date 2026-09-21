@@ -3,7 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { products as allProducts, categoriesWithCounts } from '@/lib/catalog';
-import { resolveImage } from '@/utils/image';
+import ProductThumb from '@/components/ProductThumb';
 import { Badge, Button, Card, EmptyState, Input, Select, Table, Td } from '@/ui';
 import { Search } from '@/components/icons';
 
@@ -135,11 +135,9 @@ export const Stock = () => {
                 <tr key={product.id} className={dirty ? 'bg-teal-50/60' : 'hover:bg-slate-50'}>
                   <Td>
                     <div className="flex items-center gap-3">
-                      <img
-                        src={resolveImage(product.images[0]).src}
-                        alt=""
-                        loading="lazy"
-                        className="h-9 w-9 shrink-0 rounded-lg border border-slate-200 bg-white object-contain"
+                      <ProductThumb
+                        source={product.images[0]}
+                        className="h-9 w-9 shrink-0 rounded-lg border border-slate-200"
                       />
                       <div className="min-w-0">
                         <span className="block truncate font-medium text-slate-800">

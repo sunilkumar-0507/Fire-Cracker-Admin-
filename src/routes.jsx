@@ -17,12 +17,14 @@ import AdminLayout from '@/AdminLayout';
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Products = lazy(() => import('@/pages/Products'));
 const Stock = lazy(() => import('@/pages/Stock'));
+const Inventory = lazy(() => import('@/pages/Inventory'));
 const Discounts = lazy(() => import('@/pages/Discounts'));
 const Combos = lazy(() => import('@/pages/Combos'));
 const Categories = lazy(() => import('@/pages/Categories'));
 const Orders = lazy(() => import('@/pages/Orders'));
 const Enquiries = lazy(() => import('@/pages/Enquiries'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
+const Database = lazy(() => import('@/pages/Database'));
 
 export const router = createBrowserRouter([
   {
@@ -32,12 +34,14 @@ export const router = createBrowserRouter([
       { index: true, element: <Dashboard /> },
       { path: 'products', element: <Products /> },
       { path: 'stock', element: <Stock /> },
+      { path: 'inventory', element: <Inventory /> },
       { path: 'discounts', element: <Discounts /> },
       { path: 'combos', element: <Combos /> },
       { path: 'categories', element: <Categories /> },
       { path: 'orders', element: <Orders /> },
       { path: 'enquiries', element: <Enquiries /> },
       { path: 'analytics', element: <Analytics /> },
+      { path: 'database', element: <Database /> },
       // Anything else is a typed URL or a stale bookmark from when this lived
       // under /admin on the storefront. Send it to the dashboard rather than
       // showing a 404 for what is, at worst, an old link.

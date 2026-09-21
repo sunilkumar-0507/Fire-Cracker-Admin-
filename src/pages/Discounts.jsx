@@ -132,7 +132,7 @@ export const Discounts = () => {
     <div className="space-y-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-slate-900">Discounts</h1>
+          <h1 className="font-display text-xl font-semibold text-slate-900 sm:text-2xl">Coupons</h1>
           <p className="mt-1 text-sm text-slate-500">
             Coupon codes the checkout accepts and the offer cards the shop shows.
           </p>

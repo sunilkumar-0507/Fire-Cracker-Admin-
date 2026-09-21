@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { combos, products as allProducts, findProduct } from '@/lib/catalog';
 import { formatPrice } from '@/utils/format';
-import { resolveImage } from '@/utils/image';
+import ProductThumb from '@/components/ProductThumb';
 import { ACCENT_KEYS } from '@/constants/accents';
 import {
   Badge,
@@ -110,10 +110,9 @@ const LineBuilder = ({ includes, onChange, bundleDiscount }) => {
                   }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-50"
                 >
-                  <img
-                    src={resolveImage(product.images[0]).src}
-                    alt=""
-                    className="h-7 w-7 rounded border border-slate-200 object-contain"
+                  <ProductThumb
+                    source={product.images[0]}
+                    className="h-7 w-7 rounded border border-slate-200"
                   />
                   <span className="min-w-0 flex-1 truncate text-slate-800">{product.name}</span>
                   <span className="shrink-0 text-xs text-slate-500">{formatPrice(product.price)}</span>
@@ -132,10 +131,9 @@ const LineBuilder = ({ includes, onChange, bundleDiscount }) => {
         <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200 bg-white">
           {lines.map((line) => (
             <li key={line.slug} className="flex items-center gap-3 px-3 py-2">
-              <img
-                src={resolveImage(line.product.images[0]).src}
-                alt=""
-                className="h-9 w-9 shrink-0 rounded border border-slate-200 object-contain"
+              <ProductThumb
+                source={line.product.images[0]}
+                className="h-9 w-9 shrink-0 rounded border border-slate-200"
               />
               <div className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-slate-800">

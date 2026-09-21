@@ -14,7 +14,7 @@ import {
   Table,
   Td,
 } from '@/ui';
-import { MessageCircle, Phone, Search } from '@/components/icons';
+import { MessageCircle, Phone, Search, Trash2 } from '@/components/icons';
 import { ENQUIRY_STATUSES, ENQUIRY_TONE } from '@/constants';
 
 /**
@@ -25,16 +25,39 @@ import { ENQUIRY_STATUSES, ENQUIRY_TONE } from '@/constants';
  * quoted, won or closed. Contact messages do not, because there is nothing to
  * track about "they asked a question and we rang them back".
  *
- * Neither is journalled to disk by the API, which is deliberate and worth
- * knowing while reading this screen: an answered enquiry is answered, and a
- * permanent file of names and phone numbers is a liability the shop did not
- * ask for. The notification email is the durable copy.
+ * The newsletter list sits here too. It is the same kind of record — somebody
+ * handed the shop their address — and it is the only one on this screen that
+ * can be removed, because an unsubscribe has to actually remove somebody.
+ *
+ * How long any of this survives depends on where the API keeps its data, and
+ * it is worth knowing while reading this screen. On a database, all three are
+ * kept. On the JSON files they last only as long as the API is running, and
+ * the notification email is the durable copy — a permanent plain-text file of
+ * names and phone numbers inside the folder the storefront is built from is a
+ * liability the shop never asked for. The Database screen says which is in use.
  */
 
 const TABS = [
   { id: 'enquiries', label: 'Bulk enquiries' },
   { id: 'messages', label: 'Contact messages' },
+  { id: 'subscribers', label: 'Newsletter' },
 ];
+
+/** What an empty list should say — each one names where the rows come from. */
+const EMPTY = {
+  enquiries: {
+    title: 'No bulk enquiries yet',
+    hint: 'They arrive from the bulk order form on the shop.',
+  },
+  messages: {
+    title: 'No messages yet',
+    hint: 'They arrive from the contact page on the shop.',
+  },
+  subscribers: {
+    title: 'Nobody has subscribed yet',
+    hint: 'Addresses arrive from the newsletter box in the shop footer.',
+  },
+};
 
 /* ------------------------------- detail ---------------------------------- */
 
@@ -140,7 +163,9 @@ export const Enquiries = () => {
       const page =
         tab === 'enquiries'
           ? await adminApi.enquiries.list({ status, q: query, pageSize: 100 })
-          : await adminApi.messages.list({ pageSize: 100 });
+          : tab === 'subscribers'
+            ? await adminApi.subscribers.list({ q: query, pageSize: 200 })
+            : await adminApi.messages.list({ pageSize: 100 });
 
       setRows(page.items);
     } catch (caught) {
@@ -162,6 +187,24 @@ export const Enquiries = () => {
       setRows((current) => current.map((r) => (r.enquiryId === id ? updated : r)));
       setSelected(updated);
       toast.success(`Marked ${next}`);
+    } catch (caught) {
+      toast.error(caught.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /**
+   * Removing an address is the one destructive thing on this screen, and it is
+   * not worth a confirmation dialog: the whole point of an unsubscribe is that
+   * it is easy, and somebody re-subscribing costs one form submission.
+   */
+  const unsubscribe = async (email) => {
+    setSaving(true);
+    try {
+      await adminApi.subscribers.remove(email);
+      setRows((current) => current.filter((r) => r.email !== email));
+      toast.success(`${email} removed`);
     } catch (caught) {
       toast.error(caught.message);
     } finally {
@@ -199,10 +242,10 @@ export const Enquiries = () => {
 
       <Card
         bodyClass="p-0"
-        title={tab === 'enquiries' ? 'Bulk enquiries' : 'Contact messages'}
+        title={TABS.find((t) => t.id === tab).label}
         subtitle={rows ? `${rows.length} shown` : null}
         actions={
-          tab === 'enquiries' ? (
+          tab === 'messages' ? null : (
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search
@@ -212,44 +255,68 @@ export const Enquiries = () => {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Name, phone, district"
+                  placeholder={tab === 'enquiries' ? 'Name, phone, district' : 'Email address'}
                   className="h-8 w-52 pl-7 text-xs"
                 />
               </div>
 
-              <Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="h-8 w-auto py-0 text-xs"
-              >
-                <option value="all">All statuses</option>
-                {ENQUIRY_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s[0].toUpperCase() + s.slice(1)}
-                  </option>
-                ))}
-              </Select>
+              {tab === 'enquiries' ? (
+                <Select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="h-8 w-auto py-0 text-xs"
+                >
+                  <option value="all">All statuses</option>
+                  {ENQUIRY_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s[0].toUpperCase() + s.slice(1)}
+                    </option>
+                  ))}
+                </Select>
+              ) : null}
             </div>
-          ) : null
+          )
         }
       >
         {rows === null ? (
-          <Loading label="Loading enquiries" />
+          <Loading label="Loading" />
         ) : error ? (
           <EmptyState
-            title="Could not load enquiries"
+            title="Could not load this list"
             hint={error}
             action={<Button onClick={fetchRows}>Try again</Button>}
           />
         ) : rows.length === 0 ? (
           <EmptyState
-            title={tab === 'enquiries' ? 'No bulk enquiries yet' : 'No messages yet'}
-            hint={
-              tab === 'enquiries'
-                ? 'They arrive from the bulk order form on the shop.'
-                : 'They arrive from the contact page on the shop.'
-            }
+            title={EMPTY[tab].title}
+            hint={query ? 'Nothing matches that search.' : EMPTY[tab].hint}
           />
+        ) : tab === 'subscribers' ? (
+          <Table
+            head={[
+              'Email',
+              'Subscribed',
+              { key: 'actions', label: '', align: 'right' },
+            ]}
+          >
+            {rows.map((row) => (
+              <tr key={row.email} className="hover:bg-slate-50">
+                <Td className="font-medium text-slate-900">{row.email}</Td>
+                <Td className="whitespace-nowrap text-xs">{formatDate(row.subscribedAt)}</Td>
+                <Td align="right">
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    disabled={saving}
+                    onClick={() => unsubscribe(row.email)}
+                    icon={<Trash2 size={12} />}
+                  >
+                    Remove
+                  </Button>
+                </Td>
+              </tr>
+            ))}
+          </Table>
         ) : tab === 'enquiries' ? (
           <Table
             head={[

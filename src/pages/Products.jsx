@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import { products as allProducts, categoriesWithCounts, allTags } from '@/lib/catalog';
 import { formatPrice } from '@/utils/format';
 import { PRODUCT_PHOTOS } from '@/utils/productPhotos';
-import { resolveImage } from '@/utils/image';
+import ProductThumb from '@/components/ProductThumb';
 import {
   Badge,
   Button,
@@ -39,8 +39,6 @@ const blank = (category) => ({
   highlights: [],
   images: [],
   stock: 0,
-  rating: 4.5,
-  reviews: 0,
   tags: [],
   specs: {},
   featured: false,
@@ -61,8 +59,6 @@ const fromProduct = (p) => ({
   highlights: [...p.highlights],
   images: [...p.images],
   stock: p.stock,
-  rating: p.rating,
-  reviews: p.reviews,
   tags: [...p.tags],
   specs: { ...p.specs },
   featured: p.featured,
@@ -102,10 +98,9 @@ const ImagePicker = ({ value, onChange }) => {
         <ul className="flex flex-wrap gap-2">
           {value.map((key) => (
             <li key={key} className="relative">
-              <img
-                src={resolveImage(key).src}
-                alt=""
-                className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain"
+              <ProductThumb
+                source={key}
+                className="h-16 w-16 rounded-lg border border-slate-200"
               />
               <button
                 type="button"
@@ -145,11 +140,9 @@ const ImagePicker = ({ value, onChange }) => {
                     : 'block w-full rounded-lg border-2 border-transparent p-0.5 hover:border-slate-300'
                 }
               >
-                <img
-                  src={resolveImage(key).src}
-                  alt=""
-                  loading="lazy"
-                  className="aspect-square w-full rounded object-contain"
+                <ProductThumb
+                  source={key}
+                  className="aspect-square w-full rounded"
                 />
               </button>
             </li>
@@ -504,11 +497,9 @@ export const Products = () => {
               <tr key={product.id} className="hover:bg-slate-50">
                 <Td>
                   <div className="flex items-center gap-3">
-                    <img
-                      src={resolveImage(product.images[0]).src}
-                      alt=""
-                      loading="lazy"
-                      className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-white object-contain"
+                    <ProductThumb
+                      source={product.images[0]}
+                      className="h-10 w-10 shrink-0 rounded-lg border border-slate-200"
                     />
                     <div className="min-w-0">
                       <span className="block truncate font-medium text-slate-800">{product.name}</span>

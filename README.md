@@ -8,7 +8,7 @@ the shop. The two meet only at the REST API.
 | --- | --- |
 | Storefront | [Fire-Crackers](https://github.com/sunilkumar-0507/Fire-Crackers) — `src/`, port 5173 |
 | **This repo** | The shop admin, port 5174 |
-| API | ASP.NET Core, port 5080 — lives in the storefront repo under `api/` |
+| API | ASP.NET Core, port 5080 — [Fire_Cracker_API](https://github.com/sunilkumar-0507/Fire_Cracker_API) |
 
 ```bash
 npm install
@@ -31,10 +31,11 @@ to configure and no CORS pre-flight locally. Point it elsewhere with
 VITE_API_TARGET=https://api.example.com npm run dev
 ```
 
-The API is not in this repository. Run it from the storefront repo:
+The API is not in this repository. It has its own:
+[Fire_Cracker_API](https://github.com/sunilkumar-0507/Fire_Cracker_API).
 
 ```bash
-dotnet run --project api/GopiCrackers.Api
+dotnet run --project GopiCrackers.Api      # from that repo
 ```
 
 ## Passcode
@@ -44,19 +45,13 @@ The admin is guarded by one shared passcode, read by the API from
 answers 503 to every admin endpoint — a deployment that forgets to set one
 refuses everyone rather than admitting everyone.
 
-For a demo it is set in the storefront repo's
-`api/GopiCrackers.Api/appsettings.Development.json`:
-
-```
-gopi-demo-2026
-```
-
-Anywhere else, set your own:
+Set your own, in the API repo:
 
 ```bash
-dotnet user-secrets set "Storefront:Admin:Passcode" "<passcode>" \
-  --project api/GopiCrackers.Api
+dotnet user-secrets set "Storefront:Admin:Passcode" "<passcode>" --project GopiCrackers.Api
 ```
+
+On a server it is an environment variable, `Storefront__Admin__Passcode`.
 
 It is sent in plain text on every request, with no accounts, no sessions, no
 audit trail and no rate limiting. It keeps the admin out of casual reach on a
@@ -67,33 +62,6 @@ of it before this is exposed to the internet. The seam to replace is the API's
 The passcode you type lives in `sessionStorage` and dies with the tab. It is
 verified against the API on every load rather than trusted, so a stale one
 re-prompts instead of failing mid-screen.
-
-## Showing it to someone
-
-There are two ways, and the first needs no API at all.
-
-**A static demo build.** The admin answers its own requests in the browser from
-a snapshot of a real seeded API, so it can be deployed to Vercel or any static
-host with no backend behind it. The passcode arrives filled in and an amber bar
-says the data is invented.
-
-```bash
-npm run build:demo     # dist/, deploy anywhere
-npm run preview:demo   # look at it first, on :4174
-```
-
-`vercel.json` already points Vercel at that build and adds the SPA rewrite the
-router needs. A normal `npm run build` contains none of the demo code.
-
-**A real API with seeded trade.** `demo/seed.mjs` fills a running API with a
-fortnight of orders, enquiries and the browsing behind them.
-
-```bash
-node demo/seed.mjs                                          # API running
-node demo/seed.mjs --backdate --data <storefront>/src/data  # API stopped
-```
-
-Both are covered in [demo/README.md](demo/README.md).
 
 ## Screens
 
@@ -108,6 +76,8 @@ Both are covered in [demo/README.md](demo/README.md).
 | Orders | The order book, with status transitions and a note per step |
 | Enquiries | Bulk quote requests and contact messages |
 | Analytics | Views, baskets, searches and the funnel |
+| Inventory | Stock intake ledger, reconciled against the order book |
+| Database | Which backend the API is on, schema state, migrate / seed / export |
 
 Deactivating is not deleting. A parked product keeps its page, its photos and
 its history, reads as "temporarily unavailable" to a shopper, and cannot be put

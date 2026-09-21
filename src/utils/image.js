@@ -2,9 +2,10 @@
  * Image resolution.
  *
  * Products carry `images: ["GOPI Crackers/ROCKET/Baby Rocket.jfif", ...]` —
- * keys into the real photography shipped from `src/assets`. Anything that is
- * not a known photo falls back to the generated vector art, and an absolute
- * URL (what a real API would send) is passed straight through to an `<img>`.
+ * keys into the real photography shipped from `src/assets`. An absolute URL
+ * (what a real API would send) is passed straight through to an `<img>`.
+ * Anything else resolves to an art type, which the UI draws as the matching
+ * icon rather than as a stand-in photograph.
  */
 
 import { photoUrl } from './productPhotos';
@@ -23,7 +24,7 @@ const ART_TYPES = new Set([
 const isUrl = (value) => typeof value === 'string' && /^(https?:|data:|\/)/.test(value);
 
 /**
- * @returns {{kind:'url', src:string} | {kind:'art', type:string, variant:number}}
+ * @returns {{kind:'url', src:string} | {kind:'art', type:string}}
  */
 export const resolveImage = (value, fallbackType = 'rocket') => {
   if (isUrl(value)) return { kind: 'url', src: value };
@@ -31,12 +32,8 @@ export const resolveImage = (value, fallbackType = 'rocket') => {
   const photo = photoUrl(value);
   if (photo) return { kind: 'url', src: photo };
 
-  const [type, variant] = String(value ?? '').split('/');
-  return {
-    kind: 'art',
-    type: ART_TYPES.has(type) ? type : fallbackType,
-    variant: Number(variant) || 1,
-  };
+  const [type] = String(value ?? '').split('/');
+  return { kind: 'art', type: ART_TYPES.has(type) ? type : fallbackType };
 };
 
 /** First image of a product, or a category-appropriate placeholder. */

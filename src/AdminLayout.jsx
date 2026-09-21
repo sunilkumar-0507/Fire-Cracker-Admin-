@@ -9,6 +9,7 @@ import { Button, Loading } from '@/ui';
 import {
   ArrowUpRight,
   Bolt,
+  Database,
   Eye,
   FileText,
   Gift,
@@ -19,6 +20,7 @@ import {
   Tag,
   Truck,
   Users,
+  Wallet,
   X,
 } from '@/components/icons';
 
@@ -29,13 +31,19 @@ import {
 const NAV = [
   { to: '/', end: true, label: 'Dashboard', icon: Bolt },
   { to: '/products', label: 'Products', icon: Package },
-  { to: '/stock', label: 'Stock', icon: FileText },
-  { to: '/discounts', label: 'Discounts', icon: Tag },
+  { to: '/stock', label: 'Stock levels', icon: FileText },
+  { to: '/inventory', label: 'Stock monitor', icon: Wallet },
+  // "Discounts" hid what this screen is for: every row on it is a coupon code
+  // the checkout accepts.
+  { to: '/discounts', label: 'Coupons', icon: Tag },
   { to: '/combos', label: 'Combo packs', icon: Gift },
   { to: '/categories', label: 'Categories', icon: ShoppingBag },
   { to: '/orders', label: 'Orders', icon: Truck },
   { to: '/enquiries', label: 'Enquiries', icon: Users },
   { to: '/analytics', label: 'Analytics', icon: Eye },
+  // Last, and deliberately: it is the only screen that is about the server
+  // rather than about the shop.
+  { to: '/database', label: 'Database', icon: Database },
 ];
 
 /**

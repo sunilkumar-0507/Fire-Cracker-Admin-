@@ -13,8 +13,6 @@
  * screens can render `err.message` straight into a toast.
  */
 
-import { DEMO } from '@/demo/flags';
-
 /** Vite inlines this at build time; the proxy in vite.config.js covers dev. */
 const BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
 
@@ -103,27 +101,6 @@ const request = async (path, { method = 'GET', body, anonymous = false, signal }
   // which is the same public catalogue the shop reads.
   if (!anonymous) headers['X-Admin-Passcode'] = adminPasscode.get();
 
-  /* Tested against `import.meta.env` directly rather than the imported `DEMO`.
-     Vite replaces this with a literal, so a normal build reads `if (undefined)`,
-     drops the branch, and never emits the demo chunk at all — whereas a flag
-     imported from another module leaves Rollup emitting a quarter of a megabyte
-     of invented customers into a production deployment that never loads it. */
-  if (import.meta.env.VITE_DEMO_MODE) {
-    const { demoRequest } = await import('@/demo/demoApi');
-    const { status, payload } = await demoRequest(path, {
-      method,
-      body,
-      anonymous,
-      passcode: adminPasscode.get(),
-    });
-
-    if (status === 204) return null;
-    if (status >= 400) {
-      throw new ApiError(messageFrom(payload, status), { status, problem: payload });
-    }
-    return payload;
-  }
-
   let response;
   try {
     response = await fetch(`${BASE}${path}`, {
@@ -192,6 +169,19 @@ export const adminApi = {
     save: (levels) => request('/admin/stock', { method: 'PATCH', body: { levels } }),
   },
 
+  /**
+   * What came in, what sold, and what is left.
+   *
+   * The report is derived on every call rather than stored, so it is always of
+   * one moment — there is no cached total to go stale against the ledger.
+   */
+  inventory: {
+    report: (params = {}, signal) => request(`/admin/inventory${qs(params)}`, { signal }),
+    intake: (signal) => request('/admin/inventory/intake', { signal }),
+    /** Records a delivery. A negative quantity writes off breakage or a miscount. */
+    record: (body) => request('/admin/inventory/intake', { method: 'POST', body }),
+  },
+
   categories: {
     create: (body) => request('/admin/categories', { method: 'POST', body }),
     update: (id, body) => request(`/admin/categories/${id}`, { method: 'PUT', body }),
@@ -228,8 +218,48 @@ export const adminApi = {
   messages: {
     list: (params = {}) => request(`/admin/messages${qs(params)}`),
   },
-};
 
-export { DEMO };
+  /**
+   * The newsletter list.
+   *
+   * `remove` is the shop's own unsubscribe. The address goes in the path, so
+   * it is encoded — an email full of dots and an @ is not a path segment until
+   * somebody makes it one.
+   */
+  subscribers: {
+    list: (params = {}) => request(`/admin/subscribers${qs(params)}`),
+    remove: (email) =>
+      request(`/admin/subscribers/${encodeURIComponent(email)}`, { method: 'DELETE' }),
+  },
+
+  /**
+   * Where the shop's data is kept.
+   *
+   * The API runs on its JSON files until a connection string is configured,
+   * and on MySQL once one is. `status` is what tells the two apart from the
+   * outside, and the only one of these that is safe to call on a schedule:
+   * the other three change something.
+   *
+   * `migrate` and `seed` answer 409 with a sentence when there is no database,
+   * which `ApiError.message` carries straight to a toast.
+   */
+  database: {
+    status: (signal) => request('/admin/database', { signal }),
+    backends: (signal) => request('/admin/database/backends', { signal }),
+    /** Applies pending schema migrations. Startup does this unless AutoMigrate is off. */
+    migrate: () => request('/admin/database/migrate', { method: 'POST' }),
+    /**
+     * Fills empty tables from the JSON catalogue. `overwrite` replaces the
+     * catalogue with the files' version — it never touches orders, the stock
+     * ledger or analytics.
+     */
+    seed: (overwrite = false) =>
+      request('/admin/database/seed', { method: 'POST', body: { overwrite } }),
+    /** Re-reads the catalogue, for rows changed in the database directly. */
+    reload: () => request('/admin/database/reload', { method: 'POST' }),
+    /** Everything the shop knows, in one JSON document. */
+    export: (signal) => request('/admin/database/export', { signal }),
+  },
+};
 
 export default adminApi;

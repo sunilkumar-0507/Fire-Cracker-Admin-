@@ -46,6 +46,8 @@ import {
 import {
   FaAward,
   FaBuilding,
+  FaDatabase,
+  FaDownload,
   FaFire,
   FaHeart,
   FaIndustry,
@@ -146,6 +148,8 @@ export const Spinner = icon(TfiReload, 'Spinner');
 
 /* Content ----------------------------------------------------------------- */
 export const Copy = icon(TfiFiles, 'Copy');
+export const Database = icon(FaDatabase, 'Database');
+export const Download = icon(FaDownload, 'Download');
 export const FileText = icon(TfiFile, 'FileText');
 export const Flame = icon(FaFire, 'Flame');
 export const Leaf = icon(FaLeaf, 'Leaf');
