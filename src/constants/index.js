@@ -6,7 +6,14 @@
  * cost a full reload during development.
  */
 
-/** Mirrors `OrderStore.Statuses` in the API, in the order an order moves through. */
+/**
+ * The order vocabulary, in the order an order moves through.
+ *
+ * A fallback now, not the source: `lib/statuses.js` fetches
+ * `/admin/orders/statuses` and only falls back to this when the call fails, so
+ * a status added on the API side reaches the screens without an admin release.
+ * Keep it in step anyway — it is what renders when the API cannot be reached.
+ */
 export const ORDER_STATUSES = [
   'pending',
   'confirmed',
@@ -45,7 +52,7 @@ export const STATUS_TONE = {
 /** Statuses that still need somebody to do something — the dashboard queue. */
 export const OPEN_STATUSES = ['pending', 'confirmed', 'processing', 'ready'];
 
-/** Bulk enquiry statuses, mirroring `OrderStore.EnquiryStatuses`. */
+/** Bulk enquiry vocabulary. Fallback for `/admin/enquiries/statuses`, as above. */
 export const ENQUIRY_STATUSES = ['received', 'quoted', 'won', 'closed'];
 
 export const ENQUIRY_TONE = {

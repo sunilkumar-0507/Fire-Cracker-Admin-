@@ -202,6 +202,19 @@ export const adminApi = {
 
   orders: {
     list: (params = {}) => request(`/admin/orders${qs(params)}`),
+
+    /**
+     * The status vocabulary, asked for rather than mirrored.
+     *
+     * The admin and the API have to agree on these words exactly: a filter or
+     * a button offering a status the API does not know is a dead control, and
+     * one missing a status the API added is a state no one here can reach.
+     * Keeping a copy in constants/ made that drift silent, so the live list
+     * wins — see lib/statuses.js, which falls back to the copy when the call
+     * fails so the screen still works rather than rendering an empty dropdown.
+     */
+    statuses: (signal) => request('/admin/orders/statuses', { signal }),
+
     get: (orderId) => request(`/admin/orders/${orderId}`),
     /** `note` is optional and appears on the customer's tracking page. */
     setStatus: (orderId, status, note) =>
@@ -210,6 +223,10 @@ export const adminApi = {
 
   enquiries: {
     list: (params = {}) => request(`/admin/enquiries${qs(params)}`),
+
+    /** The enquiry vocabulary, for the reasons on `orders.statuses` above. */
+    statuses: (signal) => request('/admin/enquiries/statuses', { signal }),
+
     get: (id) => request(`/admin/enquiries/${id}`),
     setStatus: (id, status) =>
       request(`/admin/enquiries/${id}/status`, { method: 'PATCH', body: { status } }),

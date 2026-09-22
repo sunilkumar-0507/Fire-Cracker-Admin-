@@ -4,10 +4,11 @@ import { adminApi } from '@/lib/api';
 import { formatDate, formatPrice } from '@/utils/format';
 import { Badge, Button, Card, Drawer, EmptyState, Input, Loading, Select, Table, Td } from '@/ui';
 import { Search } from '@/components/icons';
-import { ORDER_STATUSES, STATUS_LABEL, STATUS_TONE } from '@/constants';
+import { STATUS_LABEL, STATUS_TONE } from '@/constants';
+import { useOrderStatuses } from '@/lib/statuses';
 
 
-const OrderDetail = ({ order, onStatus, busy, note, onNote }) => (
+const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses }) => (
   <div className="space-y-5">
     <div className="grid gap-3 sm:grid-cols-2">
       {[
@@ -108,7 +109,7 @@ const OrderDetail = ({ order, onStatus, busy, note, onNote }) => (
 
     <Card title="Move this order on" bodyClass="p-4">
       <div className="flex flex-wrap gap-2">
-        {ORDER_STATUSES.map((status) => (
+        {statuses.map((status) => (
           <Button
             key={status}
             size="sm"
@@ -154,6 +155,7 @@ export const Orders = () => {
   const [open, setOpen] = useState(null);
   const [busy, setBusy] = useState('');
   const [note, setNote] = useState('');
+  const orderStatuses = useOrderStatuses();
 
   const load = useCallback(async () => {
     try {
@@ -212,7 +214,7 @@ export const Orders = () => {
           </div>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-40">
             <option value="all">All statuses</option>
-            {ORDER_STATUSES.map((s) => (
+            {orderStatuses.map((s) => (
               <option key={s} value={s}>
                 {STATUS_LABEL[s] ?? s}
               </option>
@@ -297,6 +299,7 @@ export const Orders = () => {
             busy={busy}
             note={note}
             onNote={setNote}
+            statuses={orderStatuses}
           />
         ) : null}
       </Drawer>

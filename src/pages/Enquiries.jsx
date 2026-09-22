@@ -15,7 +15,8 @@ import {
   Td,
 } from '@/ui';
 import { MessageCircle, Phone, Search, Trash2 } from '@/components/icons';
-import { ENQUIRY_STATUSES, ENQUIRY_TONE } from '@/constants';
+import { ENQUIRY_TONE } from '@/constants';
+import { useEnquiryStatuses } from '@/lib/statuses';
 
 /**
  * The enquiry book — requirement 11's "orders <em>or enquiries</em>".
@@ -61,7 +62,7 @@ const EMPTY = {
 
 /* ------------------------------- detail ---------------------------------- */
 
-const EnquiryDrawer = ({ enquiry, onClose, onStatus, saving }) => {
+const EnquiryDrawer = ({ enquiry, onClose, onStatus, saving, statuses }) => {
   if (!enquiry) return null;
 
   const rows = [
@@ -109,7 +110,7 @@ const EnquiryDrawer = ({ enquiry, onClose, onStatus, saving }) => {
             disabled={saving}
             onChange={(e) => onStatus(enquiry.enquiryId, e.target.value)}
           >
-            {ENQUIRY_STATUSES.map((status) => (
+            {statuses.map((status) => (
               <option key={status} value={status}>
                 {status[0].toUpperCase() + status.slice(1)}
               </option>
@@ -146,6 +147,7 @@ const EnquiryDrawer = ({ enquiry, onClose, onStatus, saving }) => {
 /* --------------------------------- page ---------------------------------- */
 
 export const Enquiries = () => {
+  const enquiryStatuses = useEnquiryStatuses();
   const [tab, setTab] = useState('enquiries');
   const [status, setStatus] = useState('all');
   const [query, setQuery] = useState('');
@@ -267,7 +269,7 @@ export const Enquiries = () => {
                   className="h-8 w-auto py-0 text-xs"
                 >
                   <option value="all">All statuses</option>
-                  {ENQUIRY_STATUSES.map((s) => (
+                  {enquiryStatuses.map((s) => (
                     <option key={s} value={s}>
                       {s[0].toUpperCase() + s.slice(1)}
                     </option>
@@ -382,6 +384,7 @@ export const Enquiries = () => {
         saving={saving}
         onClose={() => setSelected(null)}
         onStatus={changeStatus}
+        statuses={enquiryStatuses}
       />
     </div>
   );
