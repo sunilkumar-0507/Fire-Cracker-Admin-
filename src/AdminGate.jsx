@@ -78,7 +78,7 @@ export const AdminGate = ({ children }) => {
           <Lock size={18} />
         </span>
 
-        <h1 className="mt-4 text-lg font-semibold text-white">Gopi Crackers admin</h1>
+        <h1 className="mt-4 text-lg font-semibold text-white">SKV Pyros admin</h1>
         <p className="mt-1 text-sm text-slate-400">
           Enter the shop passcode to manage products, discounts and orders.
         </p>

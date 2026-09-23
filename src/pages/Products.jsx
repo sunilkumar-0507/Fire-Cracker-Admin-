@@ -32,7 +32,7 @@ const blank = (category) => ({
   name: '',
   slug: '',
   category,
-  brand: 'Gopi Crackers',
+  brand: 'SKV Pyros',
   price: 0,
   mrp: 0,
   unit: '',

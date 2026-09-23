@@ -58,7 +58,7 @@ const STOREFRONT_URL = import.meta.env.VITE_STOREFRONT_URL ?? 'http://localhost:
 const Sidebar = ({ onNavigate }) => (
   <nav className="flex h-full flex-col gap-1 p-3">
     <div className="mb-4 px-2 pt-2">
-      <p className="font-display text-lg font-semibold text-white">Gopi Crackers</p>
+      <p className="font-display text-lg font-semibold text-white">SKV Pyros</p>
       <p className="text-[11px] uppercase tracking-[.18em] text-slate-500">Shop admin</p>
     </div>
 
