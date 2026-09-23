@@ -3,10 +3,56 @@ import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { formatDate, formatPrice } from '@/utils/format';
 import { Badge, Button, Card, Drawer, EmptyState, Input, Loading, Select, Table, Td } from '@/ui';
-import { Search } from '@/components/icons';
+import { Copy, MessageCircle, Search } from '@/components/icons';
 import { STATUS_LABEL, STATUS_TONE } from '@/constants';
 import { useOrderStatuses } from '@/lib/statuses';
+import { customerWhatsappHref, orderReplyMessage, orderWhatsappMessage } from '@/utils/whatsapp';
 
+/**
+ * The order as it arrived on the shop's WhatsApp.
+ *
+ * The chat itself stays on the phone — WhatsApp gives a website no way to read
+ * it — so this is the same message rebuilt from the saved order. The reference
+ * at the top is what ties a chat to its row here.
+ */
+const WhatsAppOrder = ({ order }) => {
+  const message = orderWhatsappMessage(order);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(message);
+      toast.success('Order copied');
+    } catch {
+      toast.error('Could not copy — select the text instead');
+    }
+  };
+
+  return (
+    <Card
+      title="WhatsApp order"
+      subtitle="What the customer's checkout sent to the shop's number"
+      bodyClass="p-4"
+    >
+      <pre className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-emerald-50 p-3 font-sans text-sm leading-relaxed text-slate-800">
+        {message}
+      </pre>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          icon={<MessageCircle size={13} />}
+          onClick={() =>
+            window.open(customerWhatsappHref(order.phone, orderReplyMessage(order)), '_blank', 'noopener')
+          }
+        >
+          Reply on WhatsApp
+        </Button>
+        <Button size="sm" variant="outline" icon={<Copy size={13} />} onClick={copy}>
+          Copy order
+        </Button>
+      </div>
+    </Card>
+  );
+};
 
 const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses }) => (
   <div className="space-y-5">
@@ -41,6 +87,8 @@ const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses }) => (
       </p>
       {order.notes ? <p className="mt-2 text-xs text-slate-500">{order.notes}</p> : null}
     </Card>
+
+    <WhatsAppOrder order={order} />
 
     {/* The customer sees exactly this on the tracking page, which is the
         reason it is worth showing here rather than only the current status. */}
@@ -275,9 +323,19 @@ export const Orders = () => {
                   {formatPrice(order.totals.total)}
                 </Td>
                 <Td align="right">
-                  <Button size="sm" variant="outline" onClick={() => setOpen(order)}>
-                    Open
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      aria-label={`WhatsApp ${order.name}`}
+                      title={`WhatsApp ${order.phone}`}
+                      icon={<MessageCircle size={13} />}
+                      onClick={() => window.open(customerWhatsappHref(order.phone), '_blank', 'noopener')}
+                    />
+                    <Button size="sm" variant="outline" onClick={() => setOpen(order)}>
+                      Open
+                    </Button>
+                  </div>
                 </Td>
               </tr>
             ))}

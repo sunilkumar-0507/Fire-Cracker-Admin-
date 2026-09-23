@@ -96,7 +96,10 @@ const messageFrom = (problem, status) => {
 
 const request = async (path, { method = 'GET', body, anonymous = false, signal } = {}) => {
   const headers = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  // A file goes as multipart, and the browser has to write that Content-Type
+  // itself — the boundary it chooses is part of the header.
+  const isForm = body instanceof FormData;
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   // Every admin call is authenticated. The flag exists for `/api/bootstrap`,
   // which is the same public catalogue the shop reads.
   if (!anonymous) headers['X-Admin-Passcode'] = adminPasscode.get();
@@ -107,7 +110,7 @@ const request = async (path, { method = 'GET', body, anonymous = false, signal }
       method,
       headers,
       signal,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined || isForm ? body : JSON.stringify(body),
     });
   } catch (cause) {
     if (cause?.name === 'AbortError') throw cause;
@@ -163,6 +166,18 @@ export const adminApi = {
      */
     setActive: (id, active) =>
       request(`/admin/products/${id}/active`, { method: 'PATCH', body: { active } }),
+  },
+
+  /**
+   * Stores one photo on the API and returns `{ url, fileName }`. The `url` is
+   * absolute, and goes into a product's `images` exactly as it comes back.
+   */
+  uploads: {
+    image: (file) => {
+      const form = new FormData();
+      form.append('file', file, file.name);
+      return request('/admin/uploads', { method: 'POST', body: form });
+    },
   },
 
   stock: {

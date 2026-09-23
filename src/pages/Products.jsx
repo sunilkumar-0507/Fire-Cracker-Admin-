@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { products as allProducts, categoriesWithCounts, allTags } from '@/lib/catalog';
 import { formatPrice } from '@/utils/format';
 import { PRODUCT_PHOTOS } from '@/utils/productPhotos';
+import { preparePhoto } from '@/utils/photoUpload';
 import ProductThumb from '@/components/ProductThumb';
 import {
   Badge,
@@ -21,7 +22,7 @@ import {
   Textarea,
   Toggle,
 } from '@/ui';
-import { Plus, Search, Trash2 } from '@/components/icons';
+import { Download, Plus, Search, Trash2 } from '@/components/icons';
 import { AVAILABILITY_LABEL, AVAILABILITY_TONE } from '@/constants';
 
 /** Every photo the build ships, for the image picker. */
@@ -75,13 +76,46 @@ const fromProduct = (p) => ({
 /* -------------------------------------------------------------------------- */
 
 /**
- * Photos are chosen from what the build already ships rather than uploaded.
- * Every image in the catalogue is a key into `src/assets/GOPI Crackers`, which
- * the bundler hashes at build time — an uploaded file would have nowhere to
- * live and no URL that survives a redeploy. Adding photography is a commit.
+ * Photos come from two places.
+ *
+ * The library is what the build already ships: keys into
+ * `src/assets/GOPI Crackers`, hashed by the bundler. An upload is a photo from
+ * this device — the shop's phone camera, or a file on the computer — stored by
+ * the API and referenced by the absolute URL it returns, which both front ends
+ * render as-is. Either kind can be first, and the first is the card image.
  */
 const ImagePicker = ({ value, onChange }) => {
   const [filter, setFilter] = useState('');
+  const [uploading, setUploading] = useState(0);
+  const fileInput = useRef(null);
+
+  const upload = async (event) => {
+    const files = [...(event.target.files ?? [])];
+    // Cleared at once, so choosing the same photo again still fires a change.
+    event.target.value = '';
+    if (!files.length) return;
+
+    setUploading(files.length);
+    const added = [];
+
+    // One at a time: a shop's mobile data is not a place for six parallel
+    // uploads, and the order they finish in is the order they were picked.
+    for (const file of files) {
+      try {
+        const { url } = await adminApi.uploads.image(await preparePhoto(file));
+        added.push(url);
+      } catch (err) {
+        toast.error(err.message);
+      } finally {
+        setUploading((n) => n - 1);
+      }
+    }
+
+    if (added.length) {
+      onChange([...value, ...added]);
+      toast.success(added.length === 1 ? 'Photo added' : `${added.length} photos added`);
+    }
+  };
 
   const options = useMemo(() => {
     const term = filter.trim().toLowerCase();
@@ -119,10 +153,32 @@ const ImagePicker = ({ value, onChange }) => {
         </p>
       )}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          size="sm"
+          icon={<Download size={12} className="rotate-180" />}
+          busy={uploading > 0}
+          onClick={() => fileInput.current?.click()}
+        >
+          {uploading > 0 ? `Uploading ${uploading}…` : 'Upload from device'}
+        </Button>
+        <span className="text-[11px] text-slate-500">
+          JPEG, PNG or WebP. On a phone this offers the camera too.
+        </span>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={upload}
+          className="hidden"
+        />
+      </div>
+
       <Input
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        placeholder="Filter the photo library — try “sparkl”, “bomb”, “gift”"
+        placeholder="Or pick from the photo library — try “sparkl”, “bomb”, “gift”"
       />
 
       <ul className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 sm:grid-cols-6">
@@ -150,8 +206,8 @@ const ImagePicker = ({ value, onChange }) => {
         })}
       </ul>
       <p className="text-[11px] text-slate-500">
-        Showing {options.length} of {PHOTO_KEYS.length} photos the build ships. New photography goes
-        into <code className="rounded bg-slate-100 px-1">src/assets</code> as a commit.
+        Showing {options.length} of {PHOTO_KEYS.length} photos the build ships. Uploaded photos
+        are kept by the API and appear on the shop as soon as the product is saved.
       </p>
     </div>
   );
