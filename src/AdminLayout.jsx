@@ -50,10 +50,13 @@ const NAV = [
  * Where the shop is, for the "open the storefront" link.
  *
  * The two are separate deployments on separate origins, so this cannot be a
- * relative "/" any more. Set VITE_STOREFRONT_URL at build time; the default is
- * the storefront's dev server.
+ * relative "/" any more. Set VITE_STOREFRONT_URL at build time; without it a
+ * production build points at the live shop and `npm run dev` at the
+ * storefront's dev server.
  */
-const STOREFRONT_URL = import.meta.env.VITE_STOREFRONT_URL ?? 'http://localhost:5173';
+const STOREFRONT_URL =
+  import.meta.env.VITE_STOREFRONT_URL ??
+  (import.meta.env.DEV ? 'http://localhost:5173' : 'https://skvpyros.in');
 
 const Sidebar = ({ onNavigate }) => (
   <nav className="flex h-full flex-col gap-1 p-3">

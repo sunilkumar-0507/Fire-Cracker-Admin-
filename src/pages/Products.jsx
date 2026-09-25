@@ -266,6 +266,33 @@ const ProductEditor = ({ draft, setDraft, categories }) => {
       ? Math.round(((draft.mrp - draft.price) / draft.mrp) * 100)
       : 0;
 
+  // The percentage as typed. Kept apart from `discount` because whole rupees
+  // round it: 10% off a ₹13 MRP is ₹12, which reads back as 8%, and the box
+  // should not jump to 8 while someone is typing 10.
+  const [percent, setPercent] = useState(discount);
+  const priceFor = (mrp, pct) => Math.max(1, Math.round(mrp * (1 - pct / 100)));
+
+  const setMrp = (event) => {
+    if (event.target.value === '') return setDraft({ ...draft, mrp: '' });
+    const mrp = Number(event.target.value);
+    setDraft({ ...draft, mrp, price: priceFor(mrp, Number(percent) || 0) });
+  };
+
+  const setDiscount = (event) => {
+    const raw = event.target.value;
+    const pct = raw === '' ? '' : Math.min(99, Math.max(0, Number(raw)));
+    setPercent(pct);
+    if (draft.mrp > 0) setDraft({ ...draft, price: priceFor(draft.mrp, Number(pct) || 0) });
+  };
+
+  const setPrice = (event) => {
+    const price = event.target.value === '' ? '' : Number(event.target.value);
+    setDraft({ ...draft, price });
+    if (draft.mrp > 0 && price !== '') {
+      setPercent(Math.max(0, Math.round(((draft.mrp - price) / draft.mrp) * 100)));
+    }
+  };
+
   return (
     <div className="space-y-5">
       <Card title="What it is" bodyClass="space-y-4 p-4">
@@ -310,12 +337,15 @@ const ProductEditor = ({ draft, setDraft, categories }) => {
       </Card>
 
       <Card title="Price and stock" bodyClass="space-y-4 p-4">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Selling price" required hint="₹">
-            <Input type="number" min="1" value={draft.price} onChange={setNumber('price')} />
-          </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label="MRP" required hint="₹">
-            <Input type="number" min="1" value={draft.mrp} onChange={setNumber('mrp')} />
+            <Input type="number" min="1" value={draft.mrp} onChange={setMrp} />
+          </Field>
+          <Field label="Discount" hint="% off the MRP">
+            <Input type="number" min="0" max="99" value={percent} onChange={setDiscount} />
+          </Field>
+          <Field label="Selling price" required hint="₹ — worked out from the discount">
+            <Input type="number" min="1" value={draft.price} onChange={setPrice} />
           </Field>
           <Field label="Stock">
             <Input type="number" min="0" value={draft.stock} onChange={setNumber('stock')} />
@@ -329,9 +359,11 @@ const ProductEditor = ({ draft, setDraft, categories }) => {
             </span>
           ) : (
             <>
-              Shows as <strong className="text-slate-900">{discount}% off</strong> —{' '}
-              {formatPrice(draft.price || 0)} against {formatPrice(draft.mrp || 0)}. The discount is
-              worked out on save, never typed.
+              The shop shows <strong className="text-slate-900">{discount}% off</strong> —{' '}
+              {formatPrice(draft.price || 0)}, with {formatPrice(draft.mrp || 0)} struck through.
+              {Number(percent) !== discount
+                ? ` ${discount}% rather than ${percent}%, because the price is rounded to the rupee.`
+                : ''}
             </>
           )}
         </div>
@@ -570,8 +602,11 @@ export const Products = () => {
                   <span className="block font-semibold text-slate-900">
                     {formatPrice(product.price)}
                   </span>
-                  <span className="block text-xs text-slate-400 line-through">
-                    {formatPrice(product.mrp)}
+                  <span className="block text-xs text-slate-400">
+                    <span className="line-through">{formatPrice(product.mrp)}</span>
+                    {product.discount > 0 ? (
+                      <span className="ml-1 font-medium text-orange-600">{product.discount}% off</span>
+                    ) : null}
                   </span>
                 </Td>
                 <Td align="right">
@@ -648,6 +683,7 @@ export const Products = () => {
       >
         {editing ? (
           <ProductEditor
+            key={editing.id ?? 'new'}
             draft={editing.draft}
             setDraft={(draft) => setEditing((prev) => ({ ...prev, draft }))}
             categories={categoriesWithCounts}
