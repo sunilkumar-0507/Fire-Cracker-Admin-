@@ -60,7 +60,9 @@ const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses }) => (
       {[
         ['Placed', formatDate(order.placedAt)],
         ['Fulfilment', order.fulfilment === 'pickup' ? 'Collection from the shop' : 'Delivery'],
-        ['Payment', order.payment.toUpperCase()],
+        // Checkout files every order under 'cod' because payment is settled on
+        // WhatsApp; cash on delivery itself is not offered.
+        ['Payment', order.payment === 'cod' ? 'Settled on WhatsApp' : order.payment.toUpperCase()],
         ['Phone', order.phone],
         ['Email', order.email ?? '—'],
         [

@@ -221,7 +221,7 @@ export const Discounts = () => {
                   <Input
                     value={editing.draft.code}
                     onChange={set('code')}
-                    placeholder="DIWALI75"
+                    placeholder="Enter coupon code"
                     className="font-mono uppercase"
                   />
                 </Field>
