@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { products as allProducts, categoriesWithCounts, allTags } from '@/lib/catalog';
 import { formatPrice } from '@/utils/format';
-import { PRODUCT_PHOTOS } from '@/utils/productPhotos';
 import { preparePhoto } from '@/utils/photoUpload';
 import ProductThumb from '@/components/ProductThumb';
 import {
@@ -24,9 +23,6 @@ import {
 } from '@/ui';
 import { Download, Plus, Search, Trash2 } from '@/components/icons';
 import { AVAILABILITY_LABEL, AVAILABILITY_TONE } from '@/constants';
-
-/** Every photo the build ships, for the image picker. */
-const PHOTO_KEYS = Object.keys(PRODUCT_PHOTOS).sort();
 
 const blank = (category) => ({
   name: '',
@@ -76,16 +72,13 @@ const fromProduct = (p) => ({
 /* -------------------------------------------------------------------------- */
 
 /**
- * Photos come from two places.
- *
- * The library is what the build already ships: keys into
- * `src/assets/GOPI Crackers`, hashed by the bundler. An upload is a photo from
- * this device — the shop's phone camera, or a file on the computer — stored by
- * the API and referenced by the absolute URL it returns, which both front ends
- * render as-is. Either kind can be first, and the first is the card image.
+ * Photos are uploaded from this device — the shop's phone camera, or a file
+ * on the computer — stored by the API and referenced by the absolute URL it
+ * returns, which both front ends render as-is. The first is the card image.
+ * Older products may still hold library keys; those render and can be
+ * removed as before.
  */
 const ImagePicker = ({ value, onChange }) => {
-  const [filter, setFilter] = useState('');
   const [uploading, setUploading] = useState(0);
   const fileInput = useRef(null);
 
@@ -117,14 +110,7 @@ const ImagePicker = ({ value, onChange }) => {
     }
   };
 
-  const options = useMemo(() => {
-    const term = filter.trim().toLowerCase();
-    const pool = term ? PHOTO_KEYS.filter((k) => k.toLowerCase().includes(term)) : PHOTO_KEYS;
-    return pool.slice(0, 60);
-  }, [filter]);
-
-  const toggle = (key) =>
-    onChange(value.includes(key) ? value.filter((k) => k !== key) : [...value, key]);
+  const remove = (key) => onChange(value.filter((k) => k !== key));
 
   return (
     <div className="space-y-3">
@@ -138,7 +124,7 @@ const ImagePicker = ({ value, onChange }) => {
               />
               <button
                 type="button"
-                onClick={() => toggle(key)}
+                onClick={() => remove(key)}
                 aria-label={`Remove ${key}`}
                 className="absolute -right-1.5 -top-1.5 grid h-5 w-5 place-items-center rounded-full bg-rose-600 text-[10px] text-white"
               >
@@ -174,41 +160,6 @@ const ImagePicker = ({ value, onChange }) => {
           className="hidden"
         />
       </div>
-
-      <Input
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        placeholder="Or pick from the photo library — try “sparkl”, “bomb”, “gift”"
-      />
-
-      <ul className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto rounded-lg border border-slate-200 bg-white p-2 sm:grid-cols-6">
-        {options.map((key) => {
-          const active = value.includes(key);
-          return (
-            <li key={key}>
-              <button
-                type="button"
-                onClick={() => toggle(key)}
-                title={key}
-                className={
-                  active
-                    ? 'block w-full rounded-lg border-2 border-teal-500 p-0.5'
-                    : 'block w-full rounded-lg border-2 border-transparent p-0.5 hover:border-slate-300'
-                }
-              >
-                <ProductThumb
-                  source={key}
-                  className="aspect-square w-full rounded"
-                />
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <p className="text-[11px] text-slate-500">
-        Showing {options.length} of {PHOTO_KEYS.length} photos the build ships. Uploaded photos
-        are kept by the API and appear on the shop as soon as the product is saved.
-      </p>
     </div>
   );
 };
