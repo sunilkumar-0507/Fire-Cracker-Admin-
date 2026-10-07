@@ -10,7 +10,7 @@
  * admin is about twenty screens' worth of forms and tables, and the shop
  * already ships its own set tuned for a completely different look.
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/utils/cn';
 import { Check, Spinner, X } from '@/components/icons';
 
@@ -124,14 +124,31 @@ export const Toggle = ({ checked, onChange, label, hint }) => (
  * terms and tags are all this shape, and a row of chip inputs would be a lot of
  * machinery for something a shopkeeper types once.
  */
-export const LinesInput = ({ value, onChange, placeholder, rows = 4 }) => (
-  <Textarea
-    rows={rows}
-    placeholder={placeholder}
-    value={value.join('\n')}
-    onChange={(e) => onChange(e.target.value.split('\n').map((l) => l.trim()).filter(Boolean))}
-  />
-);
+export const LinesInput = ({ value, onChange, placeholder, rows = 4 }) => {
+  // The raw text is kept here because the cleaned list drops trailing spaces
+  // and blank lines — rendering from it would eat the space between two words
+  // and the Enter that starts a new line.
+  const [text, setText] = useState(() => value.join('\n'));
+  const clean = (t) => t.split('\n').map((l) => l.trim()).filter(Boolean);
+
+  // Pick up a value replaced from outside (another product opened).
+  useEffect(() => {
+    if (clean(text).join('\n') !== value.join('\n')) setText(value.join('\n'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <Textarea
+      rows={rows}
+      placeholder={placeholder}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(clean(e.target.value));
+      }}
+    />
+  );
+};
 
 /* -------------------------------------------------------------------------- */
 /* Surfaces                                                                    */
@@ -239,11 +256,17 @@ export const Td = ({ align, className, children, ...rest }) => (
 export const Drawer = ({ open, onClose, title, subtitle, footer, children, wide = false }) => {
   const panel = useRef(null);
 
+  // Pages pass a fresh onClose on every render. Reading it through a ref keeps
+  // the effect below to opening only — otherwise each keystroke in the form
+  // re-ran it, and its focus() call pulled the cursor out of the field.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+
   useEffect(() => {
     if (!open) return undefined;
 
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') closeRef.current();
     };
     document.addEventListener('keydown', onKey);
 
@@ -255,7 +278,7 @@ export const Drawer = ({ open, onClose, title, subtitle, footer, children, wide 
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
