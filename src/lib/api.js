@@ -234,6 +234,8 @@ export const adminApi = {
     /** `note` is optional and appears on the customer's tracking page. */
     setStatus: (orderId, status, note) =>
       request(`/admin/orders/${orderId}/status`, { method: 'PATCH', body: { status, note } }),
+    /** Deletes the order outright. Stock it still holds goes back on the shelf. */
+    remove: (orderId) => request(`/admin/orders/${orderId}`, { method: 'DELETE' }),
   },
 
   enquiries: {

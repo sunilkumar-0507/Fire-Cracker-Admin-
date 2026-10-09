@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { formatDate, formatPrice } from '@/utils/format';
 import { Badge, Button, Card, Drawer, EmptyState, Input, Loading, Select, Table, Td } from '@/ui';
-import { Copy, MessageCircle, Search } from '@/components/icons';
+import { Copy, MessageCircle, Search, Trash2 } from '@/components/icons';
 import { STATUS_LABEL, STATUS_TONE } from '@/constants';
 import { useOrderStatuses } from '@/lib/statuses';
 import { customerWhatsappHref, orderReplyMessage, orderWhatsappMessage } from '@/utils/whatsapp';
@@ -205,6 +205,7 @@ export const Orders = () => {
   const [open, setOpen] = useState(null);
   const [busy, setBusy] = useState('');
   const [note, setNote] = useState('');
+  const [deleting, setDeleting] = useState('');
   const orderStatuses = useOrderStatuses();
 
   const load = useCallback(async () => {
@@ -239,6 +240,27 @@ export const Orders = () => {
       toast.error(err.message);
     } finally {
       setBusy('');
+    }
+  };
+
+  const remove = async (order) => {
+    if (
+      !window.confirm(
+        `Delete order ${order.orderId} from ${order.name}? It cannot be undone, and any stock it holds goes back on the shelf.`,
+      )
+    )
+      return;
+
+    setDeleting(order.orderId);
+    try {
+      await adminApi.orders.remove(order.orderId);
+      setRows((prev) => prev.filter((o) => o.orderId !== order.orderId));
+      if (open?.orderId === order.orderId) setOpen(null);
+      toast.success(`${order.orderId} deleted`);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeleting('');
     }
   };
 
@@ -337,6 +359,15 @@ export const Orders = () => {
                     <Button size="sm" variant="outline" onClick={() => setOpen(order)}>
                       Open
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      busy={deleting === order.orderId}
+                      title={`Delete ${order.orderId}`}
+                      aria-label={`Delete ${order.orderId}`}
+                      icon={<Trash2 size={12} />}
+                      onClick={() => remove(order)}
+                    />
                   </div>
                 </Td>
               </tr>
