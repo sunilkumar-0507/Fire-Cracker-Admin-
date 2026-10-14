@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils/cn';
 import { Button } from '@/ui';
@@ -36,6 +37,8 @@ export const NotificationsButton = () => {
   const [state, setState] = useState(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [place, setPlace] = useState(null);
+  const anchor = useRef(null);
   const panel = useRef(null);
 
   useEffect(() => {
@@ -52,7 +55,9 @@ export const NotificationsButton = () => {
   useEffect(() => {
     if (!open) return undefined;
     const close = (event) => {
-      if (!panel.current?.contains(event.target)) setOpen(false);
+      if (!anchor.current?.contains(event.target) && !panel.current?.contains(event.target)) {
+        setOpen(false);
+      }
     };
     const escape = (event) => event.key === 'Escape' && setOpen(false);
     document.addEventListener('pointerdown', close);
@@ -60,6 +65,28 @@ export const NotificationsButton = () => {
     return () => {
       document.removeEventListener('pointerdown', close);
       document.removeEventListener('keydown', escape);
+    };
+  }, [open]);
+
+  // The panel hangs under the bell but never past either screen edge, so
+  // on a phone it stays fully visible wherever the bell sits in the header.
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const measure = () => {
+      const bell = anchor.current?.getBoundingClientRect();
+      if (!bell) return;
+      const gutter = 12;
+      const screen = document.documentElement.clientWidth;
+      const width = Math.min(288, screen - gutter * 2);
+      const left = Math.min(Math.max(bell.right - width, gutter), screen - width - gutter);
+      setPlace({ top: bell.bottom + 8, left, width });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    window.addEventListener('scroll', measure, true);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.removeEventListener('scroll', measure, true);
     };
   }, [open]);
 
@@ -92,7 +119,7 @@ export const NotificationsButton = () => {
   const copy = COPY[state];
 
   return (
-    <div ref={panel} className="relative">
+    <div ref={anchor}>
       <Button
         variant="ghost"
         size="sm"
@@ -113,8 +140,12 @@ export const NotificationsButton = () => {
         }
       />
 
-      {open ? (
-        <div className="fixed inset-x-4 top-16 z-50 rounded-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-10 sm:w-72 border border-slate-200 bg-white p-4 shadow-lg">
+      {open && place ? createPortal(
+        <div
+          ref={panel}
+          style={place}
+          className="fixed z-50 rounded-xl border border-slate-200 bg-white p-4 shadow-lg"
+        >
           <p className="text-sm font-semibold text-slate-900">{copy.title}</p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">{copy.hint}</p>
 
@@ -141,7 +172,8 @@ export const NotificationsButton = () => {
               </>
             ) : null}
           </div>
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </div>
   );
