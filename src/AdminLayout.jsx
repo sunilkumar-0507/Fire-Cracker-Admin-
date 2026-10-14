@@ -5,6 +5,7 @@ import { adminPasscode } from '@/lib/api';
 import { reload as reloadCatalog } from '@/lib/catalog';
 import { cn } from '@/utils/cn';
 import AdminGate from '@/AdminGate';
+import NotificationsButton from '@/components/NotificationsButton';
 import { Button, Loading } from '@/ui';
 import {
   ArrowUpRight,
@@ -171,6 +172,7 @@ export const AdminLayout = () => {
             <span className="text-sm font-semibold text-slate-800 lg:hidden">Admin</span>
 
             <div className="ml-auto flex items-center gap-2">
+              <NotificationsButton />
               <Button
                 variant="outline"
                 size="sm"

@@ -285,6 +285,20 @@ export const adminApi = {
   },
 
   /**
+   * Browser notifications for new orders and bulk enquiries. `subscribe` takes
+   * `PushSubscription.toJSON()` plus a name; the endpoint is a URL, so removal
+   * passes it in the query. See `lib/webPush.js`.
+   */
+  webPush: {
+    key: () => request('/admin/web-push/key'),
+    subscribe: (subscription, name) =>
+      request('/admin/web-push/subscriptions', { method: 'POST', body: { ...subscription, name } }),
+    unsubscribe: (endpoint) =>
+      request(`/admin/web-push/subscriptions${qs({ endpoint })}`, { method: 'DELETE' }),
+    test: () => request('/admin/web-push/test', { method: 'POST' }),
+  },
+
+  /**
    * Where the shop's data is kept.
    *
    * The API runs on its JSON files until a connection string is configured,

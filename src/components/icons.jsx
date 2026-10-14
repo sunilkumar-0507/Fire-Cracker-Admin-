@@ -7,6 +7,7 @@ import {
   TfiArrowTopRight,
   TfiArrowUp,
   TfiBag,
+  TfiBell,
   TfiBolt,
   TfiCheck,
   TfiClose,
@@ -120,6 +121,7 @@ export const AlertTriangle = icon(FaTriangleExclamation, 'AlertTriangle');
 export const Award = icon(FaAward, 'Award');
 export const Check = icon(TfiCheck, 'Check');
 export const Clock = icon(TfiTime, 'Clock');
+export const Bell = icon(TfiBell, 'Bell');
 export const Info = icon(TfiInfoAlt, 'Info');
 export const Lock = icon(TfiLock, 'Lock');
 export const ShieldAlert = icon(FaShieldHalved, 'ShieldAlert');

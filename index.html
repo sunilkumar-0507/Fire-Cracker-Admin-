@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0F172A" />
+    <!--
+      The manifest is what lets an iPhone add the admin to its Home Screen —
+      the only way iOS delivers web push. It also gives Android a proper icon.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-title" content="SKV Admin" />
     <!-- Not a public page. Even behind a passcode, it should never be indexed. -->
     <meta name="robots" content="noindex, nofollow" />
     <title>SKV Pyros — Shop admin</title>
