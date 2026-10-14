@@ -73,7 +73,8 @@ re-prompts instead of failing mid-screen.
 | Discounts | The coupon codes checkout accepts and the offer cards the shop shows |
 | Combo packs | Pick catalogue items; price, MRP and saving are derived from them |
 | Categories | Name, Tamil name, tagline, tone and artwork |
-| Orders | The order book, with status transitions and a note per step |
+| Orders | The order book, with status transitions and a note per step; online and shop orders side by side |
+| Invoices | A printable invoice for any order, and new invoices for customers buying at the shop (saved as `INV` orders) |
 | Enquiries | Bulk quote requests and contact messages |
 | Analytics | Views, baskets, searches and the funnel |
 | Inventory | Stock intake ledger, reconciled against the order book |

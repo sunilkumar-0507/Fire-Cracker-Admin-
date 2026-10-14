@@ -49,6 +49,25 @@ export const STATUS_TONE = {
   cancelled: 'rose',
 };
 
+/**
+ * How an order was paid. The checkout files every order under `cod` because
+ * payment is settled on WhatsApp; the rest are what an invoice raised at the
+ * counter can say.
+ */
+export const PAYMENT_LABEL = {
+  cod: 'Settled on WhatsApp',
+  cash: 'Cash',
+  upi: 'UPI',
+  card: 'Card',
+  bank: 'Bank transfer',
+  credit: 'Credit (pay later)',
+};
+
+/** The methods the invoice form offers, in the order a counter sees them. */
+export const INVOICE_PAYMENTS = ['cash', 'upi', 'card', 'bank', 'credit'];
+
+export const paymentLabel = (payment) => PAYMENT_LABEL[payment] ?? (payment ?? '').toUpperCase();
+
 /** Statuses that still need somebody to do something — the dashboard queue. */
 export const OPEN_STATUSES = ['pending', 'confirmed', 'processing', 'ready'];
 

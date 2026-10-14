@@ -28,6 +28,7 @@ import {
   TfiMinus,
   TfiPackage,
   TfiPlus,
+  TfiPrinter,
   TfiQuoteLeft,
   TfiReload,
   TfiRocket,
@@ -151,6 +152,7 @@ export const Copy = icon(TfiFiles, 'Copy');
 export const Database = icon(FaDatabase, 'Database');
 export const Download = icon(FaDownload, 'Download');
 export const FileText = icon(TfiFile, 'FileText');
+export const Printer = icon(TfiPrinter, 'Printer');
 export const Flame = icon(FaFire, 'Flame');
 export const Leaf = icon(FaLeaf, 'Leaf');
 export const Quote = icon(TfiQuoteLeft, 'Quote');

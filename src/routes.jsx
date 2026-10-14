@@ -22,6 +22,7 @@ const Discounts = lazy(() => import('@/pages/Discounts'));
 const Combos = lazy(() => import('@/pages/Combos'));
 const Categories = lazy(() => import('@/pages/Categories'));
 const Orders = lazy(() => import('@/pages/Orders'));
+const Invoices = lazy(() => import('@/pages/Invoices'));
 const Enquiries = lazy(() => import('@/pages/Enquiries'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
 const Database = lazy(() => import('@/pages/Database'));
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: 'combos', element: <Combos /> },
       { path: 'categories', element: <Categories /> },
       { path: 'orders', element: <Orders /> },
+      { path: 'invoices', element: <Invoices /> },
       { path: 'enquiries', element: <Enquiries /> },
       { path: 'analytics', element: <Analytics /> },
       { path: 'database', element: <Database /> },

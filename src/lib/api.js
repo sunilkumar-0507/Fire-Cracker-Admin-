@@ -215,8 +215,26 @@ export const adminApi = {
     remove: (id) => request(`/admin/offers/${id}`, { method: 'DELETE' }),
   },
 
+  /**
+   * Prices a basket exactly as the checkout would, coupon and delivery
+   * included. Public — the invoice form uses it for its running total, and the
+   * API prices the saved invoice again itself.
+   */
+  quote: (body, signal) => request('/cart/quote', { method: 'POST', body, anonymous: true, signal }),
+
+  /** The shop's name, address, GSTIN and licence — the invoice letterhead. */
+  brand: (signal) => request('/meta/brand', { anonymous: true, signal }),
+
   orders: {
+    /** `channel` is `online` (the checkout) or `offline` (invoices raised here). */
     list: (params = {}) => request(`/admin/orders${qs(params)}`),
+
+    /**
+     * Raises an invoice for a sale made off the website. It is saved as an
+     * order with an `INV` id, takes the goods off the shelf, and appears in the
+     * order book like any other.
+     */
+    create: (body) => request('/admin/orders', { method: 'POST', body }),
 
     /**
      * The status vocabulary, asked for rather than mirrored.

@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { adminApi } from '@/lib/api';
 import { formatDate, formatPrice } from '@/utils/format';
 import { Badge, Button, Card, Drawer, EmptyState, Input, Loading, Select, Table, Td } from '@/ui';
-import { Copy, MessageCircle, Search, Trash2 } from '@/components/icons';
-import { STATUS_LABEL, STATUS_TONE } from '@/constants';
+import { Copy, MessageCircle, Plus, Printer, Search, Trash2 } from '@/components/icons';
+import { InvoiceModal } from '@/components/Invoice';
+import { STATUS_LABEL, STATUS_TONE, paymentLabel } from '@/constants';
 import { useOrderStatuses } from '@/lib/statuses';
 import { customerWhatsappHref, orderReplyMessage, orderWhatsappMessage } from '@/utils/whatsapp';
 
@@ -54,16 +56,28 @@ const WhatsAppOrder = ({ order }) => {
   );
 };
 
-const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses }) => (
+const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses, onInvoice }) => (
   <div className="space-y-5">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <Badge tone={order.channel === 'offline' ? 'indigo' : 'neutral'}>
+        {order.channel === 'offline' ? 'Invoice raised at the shop' : 'Placed online'}
+      </Badge>
+      <Button size="sm" variant="outline" icon={<Printer size={12} />} onClick={onInvoice}>
+        Invoice
+      </Button>
+    </div>
+
     <div className="grid gap-3 sm:grid-cols-2">
       {[
         ['Placed', formatDate(order.placedAt)],
         ['Fulfilment', order.fulfilment === 'pickup' ? 'Collection from the shop' : 'Delivery'],
         // Checkout files every order under 'cod' because payment is settled on
         // WhatsApp; cash on delivery itself is not offered.
-        ['Payment', order.payment === 'cod' ? 'Settled on WhatsApp' : order.payment.toUpperCase()],
-        ['Phone', order.phone],
+        [
+          'Payment',
+          `${paymentLabel(order.payment)} · ${order.paymentStatus === 'paid' ? 'paid' : 'not yet paid'}`,
+        ],
+        ['Phone', order.phone || '—'],
         ['Email', order.email ?? '—'],
         [
           order.fulfilment === 'pickup' ? 'Ready from' : 'Delivery window',
@@ -82,15 +96,20 @@ const OrderDetail = ({ order, onStatus, busy, note, onNote, statuses }) => (
 
     <Card title={order.fulfilment === 'pickup' ? 'Collecting from the counter' : 'Deliver to'} bodyClass="p-4">
       <p className="text-sm font-medium text-slate-800">{order.name}</p>
-      <p className="mt-1 text-sm leading-relaxed text-slate-600">
-        {order.address}
-        <br />
-        {order.city}, {order.district} — {order.pincode}
-      </p>
+      {order.address || order.city ? (
+        <p className="mt-1 text-sm leading-relaxed text-slate-600">
+          {order.address}
+          {order.address ? <br /> : null}
+          {[order.city, order.district].filter(Boolean).join(', ')}
+          {order.pincode ? ` — ${order.pincode}` : ''}
+        </p>
+      ) : (
+        <p className="mt-1 text-xs text-slate-500">No address given.</p>
+      )}
       {order.notes ? <p className="mt-2 text-xs text-slate-500">{order.notes}</p> : null}
     </Card>
 
-    <WhatsAppOrder order={order} />
+    {order.channel === 'offline' ? null : <WhatsAppOrder order={order} />}
 
     {/* The customer sees exactly this on the tracking page, which is the
         reason it is worth showing here rather than only the current status. */}
@@ -201,7 +220,9 @@ export const Orders = () => {
   const [rows, setRows] = useState(null);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('all');
+  const [channel, setChannel] = useState('all');
   const [query, setQuery] = useState('');
+  const [invoice, setInvoice] = useState(null);
   const [open, setOpen] = useState(null);
   const [busy, setBusy] = useState('');
   const [note, setNote] = useState('');
@@ -210,14 +231,14 @@ export const Orders = () => {
 
   const load = useCallback(async () => {
     try {
-      const page = await adminApi.orders.list({ status, q: query, pageSize: 100 });
+      const page = await adminApi.orders.list({ status, channel, q: query, pageSize: 100 });
       setRows(page.items);
       setError('');
     } catch (err) {
       setError(err.message);
       setRows([]);
     }
-  }, [status, query]);
+  }, [status, channel, query]);
 
   // Refetching on every keystroke would be a request per character; the search
   // is server-side, so it waits for a pause in typing instead.
@@ -225,6 +246,8 @@ export const Orders = () => {
     const timer = setTimeout(load, query ? 300 : 0);
     return () => clearTimeout(timer);
   }, [load, query]);
+
+  const closeInvoice = useCallback(() => setInvoice(null), []);
 
   const changeStatus = async (next) => {
     setBusy(next);
@@ -270,7 +293,7 @@ export const Orders = () => {
         <div>
           <h1 className="font-display text-2xl font-semibold text-slate-900">Orders</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Everything placed through the shop’s checkout.
+            Everything placed through the shop’s checkout, and invoices raised at the counter.
           </p>
         </div>
 
@@ -292,6 +315,18 @@ export const Orders = () => {
               </option>
             ))}
           </Select>
+          <Select value={channel} onChange={(e) => setChannel(e.target.value)} className="w-36">
+            <option value="all">Online + shop</option>
+            <option value="online">Online</option>
+            <option value="offline">At the shop</option>
+          </Select>
+          <Link
+            to="/invoices?new=1"
+            className="inline-flex h-10 items-center gap-2 rounded-lg bg-teal-600 px-4 text-sm font-medium text-white hover:bg-teal-500"
+          >
+            <Plus size={13} />
+            New invoice
+          </Link>
         </div>
       </header>
 
@@ -302,9 +337,9 @@ export const Orders = () => {
           <EmptyState title="Could not load orders" hint={error} />
         ) : rows.length === 0 ? (
           <EmptyState
-            title={query || status !== 'all' ? 'Nothing matched' : 'No orders yet'}
+            title={query || status !== 'all' || channel !== 'all' ? 'Nothing matched' : 'No orders yet'}
             hint={
-              query || status !== 'all'
+              query || status !== 'all' || channel !== 'all'
                 ? 'Try a different search or status.'
                 : 'Place an order through the shop’s checkout and it will appear here.'
             }
@@ -323,11 +358,18 @@ export const Orders = () => {
           >
             {rows.map((order) => (
               <tr key={order.orderId} className="hover:bg-slate-50">
-                <Td className="font-mono text-xs text-slate-900">{order.orderId}</Td>
+                <Td className="font-mono text-xs text-slate-900">
+                  {order.orderId}
+                  {order.channel === 'offline' ? (
+                    <Badge tone="indigo" className="ml-2 font-sans">
+                      Shop
+                    </Badge>
+                  ) : null}
+                </Td>
                 <Td>
                   <span className="block font-medium text-slate-800">{order.name}</span>
                   <span className="block text-xs text-slate-500">
-                    {order.phone} · {order.city}
+                    {[order.phone, order.city].filter(Boolean).join(' · ') || '—'}
                   </span>
                 </Td>
                 <Td>
@@ -351,6 +393,15 @@ export const Orders = () => {
                     <Button
                       size="sm"
                       variant="outline"
+                      title={`Invoice for ${order.orderId}`}
+                      aria-label={`Invoice for ${order.orderId}`}
+                      icon={<Printer size={12} />}
+                      onClick={() => setInvoice(order)}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={!order.phone}
                       aria-label={`WhatsApp ${order.name}`}
                       title={`WhatsApp ${order.phone}`}
                       icon={<MessageCircle size={13} />}
@@ -391,9 +442,12 @@ export const Orders = () => {
             note={note}
             onNote={setNote}
             statuses={orderStatuses}
+            onInvoice={() => setInvoice(open)}
           />
         ) : null}
       </Drawer>
+
+      <InvoiceModal order={invoice} onClose={closeInvoice} />
     </div>
   );
 };

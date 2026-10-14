@@ -15,6 +15,7 @@ import {
   Gift,
   Menu,
   Package,
+  Printer,
   ShoppingBag,
   Spinner,
   Tag,
@@ -39,6 +40,7 @@ const NAV = [
   { to: '/combos', label: 'Combo packs', icon: Gift },
   { to: '/categories', label: 'Categories', icon: ShoppingBag },
   { to: '/orders', label: 'Orders', icon: Truck },
+  { to: '/invoices', label: 'Invoices', icon: Printer },
   { to: '/enquiries', label: 'Enquiries', icon: Users },
   { to: '/analytics', label: 'Analytics', icon: Eye },
   // Last, and deliberately: it is the only screen that is about the server

@@ -38,6 +38,24 @@
   }
 }
 
+/* Printing an invoice prints the invoice, not the admin behind it. The modal
+   is portalled straight onto <body>, so hiding every other child of <body>
+   leaves exactly one sheet of paper. */
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  body:has(.invoice-print) > *:not(.invoice-print) {
+    display: none !important;
+  }
+
+  body:has(.invoice-print) {
+    background: #fff;
+  }
+}
+
 @layer utilities {
   .hide-scrollbar {
     scrollbar-width: none;
