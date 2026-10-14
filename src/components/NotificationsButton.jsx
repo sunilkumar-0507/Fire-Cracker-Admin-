@@ -114,7 +114,7 @@ export const NotificationsButton = () => {
       />
 
       {open ? (
-        <div className="absolute right-0 top-10 z-50 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-lg">
+        <div className="fixed inset-x-4 top-16 z-50 rounded-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-10 sm:w-72 border border-slate-200 bg-white p-4 shadow-lg">
           <p className="text-sm font-semibold text-slate-900">{copy.title}</p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">{copy.hint}</p>
 
